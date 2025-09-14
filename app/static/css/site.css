@@ -1,0 +1,186 @@
+/* ============================
+   Pistlar – Site Styles (Dark)
+   ============================ */
+
+/* ---- Theme tokens ---- */
+:root{
+  --bg:#0b0d10;
+  --panel:#12161a;
+  --panel-2:#171c22;
+  --text:#e7edf3;
+  --muted:#a0b2c5;
+  --link:#76b7ff;
+  --link-hover:#a7d0ff;
+  --border:rgba(255,255,255,.09);
+  --radius:16px;
+
+  /* Make Bootstrap components inherit dark theme nicely */
+  color-scheme: dark;
+  --bs-body-bg: var(--bg);
+  --bs-body-color: var(--text);
+  --bs-secondary-color: var(--muted);
+  --bs-card-bg: var(--panel);
+  --bs-card-color: var(--text);
+  --bs-border-color: var(--border);
+}
+
+/* ---- Base ---- */
+html { scroll-behavior: smooth; }
+body { background: var(--bg); color: var(--text); line-height: 1.7; }
+img { max-width: 100%; height: auto; display: block; }
+
+/* Links: no underline anywhere */
+a { color: var(--link); text-decoration: none; }
+a:hover { color: var(--link-hover); text-decoration: none; }
+
+/* ---- Navbar ---- */
+.navbar {
+  background: rgba(255,255,255,.02);
+  backdrop-filter: saturate(150%) blur(6px);
+  border-bottom: 1px solid var(--border);
+}
+
+/* ---- Hero (page header) ---- */
+.hero {
+  padding: 2rem 0 1rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 1rem;
+}
+.hero h1 { font-weight: 700; letter-spacing: .2px; margin: 0; }
+.hero p  { color: var(--muted); margin: .25rem 0 0; }
+
+/* ---- Cards ---- */
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.card-hover {
+  transition: transform .12s ease, border-color .12s ease, background .12s ease;
+}
+.card-hover:hover {
+  transform: translateY(-2px);
+  border-color: rgba(118,183,255,.25);
+  background: var(--panel-2);
+}
+
+/* Featured post cover (wide) */
+.featured-cover,
+.post-cover {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-top-left-radius: var(--radius);
+  border-top-right-radius: var(--radius);
+}
+
+/* List card thumbnail (left) */
+.post-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-top-left-radius: var(--radius);
+  border-bottom-left-radius: var(--radius);
+}
+
+/* Titles & meta */
+.card-title { margin-bottom: .35rem; }
+.meta { color: var(--muted); font-size: .93rem; }
+
+/* Clamp list summaries to 3 lines for tidy cards */
+.card-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ---- Sidebar ---- */
+.sidebar-title {
+  letter-spacing: .08em;
+  font-size: .8rem;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+.nav-link-soft {
+  background: transparent;
+  border-radius: 10px;
+  padding: .45rem .55rem;
+  color: var(--text);
+}
+.nav-link-soft:hover { background: var(--panel-2); color: var(--text); }
+
+/* Pagination */
+.pagination .page-link {
+  background: var(--panel);
+  border-color: var(--border);
+  color: var(--text);
+}
+.pagination .page-link:hover { background: var(--panel-2); }
+
+/* ---- Article page ---- */
+.article .prose {
+  font-size: 1.05rem;
+}
+.article .prose p { margin-bottom: 1rem; }
+.article .prose h1, .article .prose h2, .article .prose h3,
+.article .prose h4, .article .prose h5, .article .prose h6 {
+  scroll-margin-top: 90px;
+  margin-top: 1.25rem;
+  margin-bottom: .5rem;
+}
+.article .prose img { border-radius: 12px; }
+.article .prose pre {
+  background:#0c1014;
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:1rem;
+  overflow:auto;
+}
+
+/* Breadcrumb (muted) */
+.breadcrumb { --bs-breadcrumb-divider: ">"; }
+.breadcrumb .breadcrumb-item a { color: var(--muted); }
+.breadcrumb .breadcrumb-item a:hover { color: var(--text); }
+.breadcrumb .breadcrumb-item.active { color: var(--muted); }
+
+/* ---- Footer ---- */
+.site-footer {
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+}
+
+/* ---- Utilities / tweaks ---- */
+
+/* Ensure Bootstrap ratio wrappers don’t shrink oddly inside cards */
+.ratio > img, .ratio > picture > img { width: 100%; height: 100%; object-fit: cover; }
+
+/* Make the card body breathe a bit more on larger screens */
+@media (min-width: 992px) {
+  .card .card-body { padding: 1.1rem 1.25rem; }
+}
+
+/* Tighter body line-clamp on very small screens to reduce scroll */
+@media (max-width: 420px) {
+  .card-text { -webkit-line-clamp: 2; }
+}
+
+/* Optional subtle focus style for keyboard users */
+a:focus-visible,
+button:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid rgba(118,183,255,.7);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Force light text when the whole card is a link */
+a.card, a.card:hover, a.card:focus {
+  color: var(--text) !important;
+}
+
+/* Also force inner text colors on linked cards */
+a.card .card-title,
+a.card .card-text { color: var(--text) !important; }
+
+a.card .meta { color: var(--muted) !important; }

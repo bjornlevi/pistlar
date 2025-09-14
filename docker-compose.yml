@@ -1,0 +1,19 @@
+services:
+  web:
+    build: .
+    environment:
+      APP_MODULE: "wsgi:app"
+      POSTS_DIR: /app/content/posts
+      ASSETS_DIR: /app/content/assets
+      PAGE_SIZE: 10
+      SITE_TITLE: "Björn Leví Gunnarsson - Pistlar"
+      PORT: 8000
+    volumes:
+      # content at repo root -> /app/content
+      - ./content/posts:/app/content/posts:ro
+      - ./content/assets:/app/content/assets:ro
+      # templates at repo root -> /app/templates
+      - ./app/templates:/app/app/templates:ro
+      # static inside package
+      - ./app/static:/app/app/static:ro
+    ports: ["8000:8000"]

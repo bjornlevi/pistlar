@@ -1,0 +1,51 @@
+# Git & VCS
+.git
+.gitignore
+
+# Virtual envs
+.venv
+venv
+env
+ENV
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+.eggs/
+dist/
+build/
+pip-wheel-metadata/
+
+# Tooling caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Local env files
+.env
+.env.*
+
+# Node (in case it appears later)
+node_modules/
+
+# --- Project-specific ---
+# We mount content at runtime; don't bake it into the image
+content/
+
+# Optional: if you hot-mount these in compose, you can also keep them out of the image
+# (comment these out if you prefer templates/static baked into the image)
+# app/static/
+# app/templates/
+
+# Logs
+*.log

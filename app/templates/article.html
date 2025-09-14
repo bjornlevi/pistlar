@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block hero %}
+  <div class="container px-0">
+    <nav aria-label="breadcrumb" class="mb-2">
+      <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item"><a href="/">Heim</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ post.title }}</li>
+      </ol>
+    </nav>
+    <h1 class="h3 fw-bold mb-0">{{ post.title }}</h1>
+  </div>
+{% endblock %}
+
+{% block content %}
+  <article class="card article">
+    {% if post.image %}
+      <div class="ratio ratio-21x9">
+        <img class="post-cover" src="{{ post.image }}" alt="">
+      </div>
+    {% endif %}
+    <div class="card-body">
+      <div class="text-secondary small mb-3">
+        {{ post.date.strftime('%Y-%m-%d') if post.date else '' }}
+      </div>
+      <div class="prose">{{ post.html|safe }}</div>
+    </div>
+  </article>
+{% endblock %}
