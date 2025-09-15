@@ -4,46 +4,54 @@
 
   {% if most_recent %}
   <article class="mb-4">
-    <a href="{{ url_for('post', slug=most_recent.slug) }}" class="card card-hover text-reset d-block">
+    <div class="card card-hover d-block">
       {% if most_recent.image %}
         <div class="ratio ratio-21x9">
-          <img class="post-cover" src="{{ most_recent.image }}" alt="">
+          <img class="featured-cover" src="{{ most_recent.image }}" alt="">
         </div>
       {% endif %}
-      <div class="card-body">
-        <h2 class="h4 card-title mb-2">{{ most_recent.title }}</h2>
-        <div class="text-secondary small mb-2">
+      <div class="card-body position-relative">
+        <h2 class="h4 card-title mb-2">
+          <a href="{{ url_for('post', slug=most_recent.slug) }}" class="stretched-link text-reset">
+            {{ most_recent.title }}
+          </a>
+        </h2>
+        <div class="meta small mb-2">
           {{ most_recent.date.strftime('%Y-%m-%d') if most_recent.date else '' }}
         </div>
-        <div class="card-text text-body">{{ most_recent.summary_html|safe }}</div>
+        <div class="card-text">{{ most_recent.summary_html|safe }}</div>
       </div>
-    </a>
+    </div>
   </article>
   {% endif %}
 
-  {% for p in rest %}
-  <article class="mb-3">
-    <a href="{{ url_for('post', slug=p.slug) }}" class="card card-hover text-reset d-block">
-      <div class="row g-0">
-        {% if p.image %}
-        <div class="col-12 col-md-4">
-          <div class="ratio ratio-16x9 h-100">
-            <img src="{{ p.image }}" alt="" class="post-thumb">
-          </div>
-        </div>
-        {% endif %}
-        <div class="col">
-          <div class="card-body">
-            <h3 class="h5 card-title mb-1">{{ p.title }}</h3>
-            <div class="text-secondary small mb-2">
-              {{ p.date.strftime('%Y-%m-%d') if p.date else '' }}
-            </div>
-            <div class="card-text">{{ p.summary_html|safe }}</div>
-          </div>
+{% for p in rest %}
+<article class="mb-3">
+  <div class="card card-hover d-block">
+    <div class="row g-0 align-items-stretch">
+      {% if p.image %}
+      <div class="col-12 col-md-4">
+        <div class="ratio ratio-16x9 h-100">
+          <img src="{{ p.image }}" alt="" class="post-thumb">
         </div>
       </div>
-    </a>
-  </article>
-  {% endfor %}
+      {% endif %}
+      <div class="col">
+        <div class="card-body position-relative h-100">
+          <h3 class="h5 card-title mb-1">
+            <a href="{{ url_for('post', slug=p.slug) }}" class="stretched-link text-reset">
+              {{ p.title }}
+            </a>
+          </h3>
+          <div class="meta small mb-2">
+            {{ p.date.strftime('%Y-%m-%d') if p.date else '' }}
+          </div>
+          <div class="card-text">{{ p.summary_html|safe }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</article>
+{% endfor %}
 
 {% endblock %}
