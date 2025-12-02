@@ -5,11 +5,14 @@ from pathlib import Path
 from typing import List
 from flask import Flask, render_template, abort, request, send_from_directory
 from werkzeug.utils import secure_filename
+from dotenv import load_dotenv
 from .content_loader import ContentStore, slugify
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]     # /app
 CONTENT_DIR   = PROJECT_ROOT / "content"                # /app/content
 IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg"}
+
+load_dotenv(PROJECT_ROOT / ".env")
 
 def create_app():
     # templates live at repo root: /pistlar/templates  -> /app/templates
