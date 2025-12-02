@@ -171,10 +171,10 @@ def create_app():
                 posts_dir_path = Path(posts_dir)
                 posts_dir_path.mkdir(parents=True, exist_ok=True)
 
-                target_path = posts_dir_path / f"{fname_base}.md"
+                target_path = posts_dir_path / f"{fname_base}.markdown"
                 i = 2
                 while target_path.exists():
-                    target_path = posts_dir_path / f"{fname_base}-{i}.md"
+                    target_path = posts_dir_path / f"{fname_base}-{i}.markdown"
                     i += 1
 
                 frontmatter_lines = [
@@ -185,10 +185,11 @@ def create_app():
                 ]
                 if image:
                     frontmatter_lines.append(f"image: {image}")
-                frontmatter_lines.append("---\n")
+                frontmatter_lines.append("---")
 
                 with open(target_path, "w", encoding="utf-8") as fh:
-                    fh.write("\n".join(frontmatter_lines))
+                    # ensure a blank line between frontmatter and body
+                    fh.write("\n".join(frontmatter_lines) + "\n\n")
                     fh.write(body.rstrip() + "\n")
 
                 success = True
@@ -210,6 +211,7 @@ def create_app():
         )
 
     @app.route("/edit/<slug>/", methods=["GET", "POST"])
+    @app.route("/edit/<slug>", methods=["GET", "POST"])
     def edit_post(slug):
         error = None
         success = None
