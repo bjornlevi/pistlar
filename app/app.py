@@ -2,6 +2,7 @@
 import os
 from datetime import datetime
 from pathlib import Path
+from typing import List
 from flask import Flask, render_template, abort, request, send_from_directory
 from werkzeug.utils import secure_filename
 from .content_loader import ContentStore, slugify
@@ -35,7 +36,7 @@ def create_app():
 
     store = ContentStore(posts_dir, assets_url_prefix="/assets")
 
-    def _list_asset_images() -> list[str]:
+    def _list_asset_images() -> List[str]:
         images = []
         base = Path(assets_dir)
         if not base.exists():
