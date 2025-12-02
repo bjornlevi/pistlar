@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block hero %}
+  <div class="container px-0">
+    <h1 class="h3 fw-bold mb-1">Nýr pistill</h1>
+    <p class="text-secondary mb-0">Fylltu út formið, verndað með lykilorði úr .env (NEW_POST_PASSWORD).</p>
+  </div>
+{% endblock %}
+
+{% block content %}
+  {% if error %}
+    <div class="alert alert-danger">{{ error }}</div>
+  {% endif %}
+  {% if success %}
+    <div class="alert alert-success">
+      Pistill vistaður.
+      {% if created_slug %}
+        <a href="{{ url_for('post', slug=created_slug) }}" class="alert-link">Skoða pistil</a>.
+      {% endif %}
+      {% if created_file %}
+        <div class="small text-secondary mt-1">Skrá: {{ created_file }}</div>
+      {% endif %}
+    </div>
+  {% endif %}
+
+  <form method="post" class="card card-hover">
+    <div class="card-body">
+      <div class="mb-3">
+        <label class="form-label" for="password">Lykilorð (NEW_POST_PASSWORD)</label>
+        <input required type="password" class="form-control" id="password" name="password" autocomplete="off">
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label" for="title">Titill</label>
+        <input required type="text" class="form-control" id="title" name="title" value="{{ request.form.title }}">
+      </div>
+
+      <div class="row g-3 mb-3">
+        <div class="col-md-4">
+          <label class="form-label" for="date">Dagsetning</label>
+          <input type="date" class="form-control" id="date" name="date" value="{{ request.form.date or default_date }}">
+        </div>
+        <div class="col-md-8">
+          <label class="form-label" for="image">Mynd (valfrjálst)</label>
+          <input type="text" class="form-control" id="image" name="image" placeholder="/assets/img/posts/example.jpg" value="{{ request.form.image }}">
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label" for="content">Innihald (Markdown)</label>
+        <textarea required class="form-control" id="content" name="content" rows="12" placeholder="---\ntitle: ...\n---\n" style="font-family: var(--bs-font-monospace);">{{ request.form.content }}</textarea>
+      </div>
+
+      <button type="submit" class="btn btn-primary">Vista pistil</button>
+    </div>
+  </form>
+{% endblock %}

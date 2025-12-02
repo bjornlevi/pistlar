@@ -1,8 +1,9 @@
 # app/app.py
 import os
+from datetime import datetime
 from pathlib import Path
 from flask import Flask, render_template, abort, request, send_from_directory
-from .content_loader import ContentStore
+from .content_loader import ContentStore, slugify
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]     # /app
 CONTENT_DIR   = PROJECT_ROOT / "content"                # /app/content
@@ -20,12 +21,14 @@ def create_app():
     assets_dir = os.environ.get("ASSETS_DIR") or str(CONTENT_DIR / "assets")
     page_size  = int(os.environ.get("PAGE_SIZE", "10"))
     site_title = os.environ.get("SITE_TITLE", "Pistlar")
+    new_post_password = os.environ.get("NEW_POST_PASSWORD")
 
     app.config.update(
         POSTS_DIR=posts_dir,
         ASSETS_DIR=assets_dir,
         PAGE_SIZE=page_size,
         SITE_TITLE=site_title,
+        NEW_POST_PASSWORD=new_post_password,
     )
 
     store = ContentStore(posts_dir, assets_url_prefix="/assets")
@@ -70,6 +73,82 @@ def create_app():
             page=page,
             prev_page=prev_page,
             next_page=next_page,
+        )
+
+    @app.route("/new", methods=["GET", "POST"])
+    def new_post_form():
+        error = None
+        success = None
+        created_file = None
+        created_slug = None
+
+        if request.method == "POST":
+            form_password = request.form.get("password", "")
+            title = (request.form.get("title") or "").strip()
+            date_str = (request.form.get("date") or "").strip()
+            image = (request.form.get("image") or "").strip()
+            body = (request.form.get("content") or "").strip()
+
+            if not new_post_password:
+                error = "Set NEW_POST_PASSWORD in your environment to enable this form."
+            elif form_password != new_post_password:
+                error = "Rangt lykilorð."
+            elif not title:
+                error = "Titill vantar."
+            elif not body:
+                error = "Innihald vantar."
+            else:
+                try:
+                    date_obj = datetime.fromisoformat(date_str).date() if date_str else datetime.utcnow().date()
+                except ValueError:
+                    date_obj = datetime.utcnow().date()
+
+                base_slug = slugify(title) or "post"
+
+                # Ensure unique slug
+                existing_slugs = {p.slug for p in store.all_posts()}
+                final_slug = base_slug
+                n = 2
+                while final_slug in existing_slugs:
+                    final_slug = f"{base_slug}-{n}"
+                    n += 1
+
+                fname_base = f"{date_obj.isoformat()}-{final_slug}"
+                posts_dir_path = Path(posts_dir)
+                posts_dir_path.mkdir(parents=True, exist_ok=True)
+
+                target_path = posts_dir_path / f"{fname_base}.md"
+                i = 2
+                while target_path.exists():
+                    target_path = posts_dir_path / f"{fname_base}-{i}.md"
+                    i += 1
+
+                frontmatter_lines = [
+                    "---",
+                    f"title: {title}",
+                    f"date: {date_obj.isoformat()}",
+                    f"slug: {final_slug}",
+                ]
+                if image:
+                    frontmatter_lines.append(f"image: {image}")
+                frontmatter_lines.append("---\n")
+
+                with open(target_path, "w", encoding="utf-8") as fh:
+                    fh.write("\n".join(frontmatter_lines))
+                    fh.write(body.rstrip() + "\n")
+
+                success = True
+                created_file = str(target_path)
+                created_slug = final_slug
+
+        return render_template(
+            "new_post.html",
+            site_title=site_title,
+            error=error,
+            success=success,
+            created_file=created_file,
+            created_slug=created_slug,
+            default_date=datetime.utcnow().date().isoformat(),
         )
 
     return app
