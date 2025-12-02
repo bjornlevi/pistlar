@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block hero %}
+  <div class="container px-0">
+    <h1 class="h3 fw-bold mb-1">Breyta pistli</h1>
+    <div class="text-secondary small">Slug: {{ post.slug }}</div>
+  </div>
+{% endblock %}
+
+{% block content %}
+  {% if error %}
+    <div class="alert alert-danger">{{ error }}</div>
+  {% endif %}
+  {% if success %}
+    <div class="alert alert-success">
+      Pistill uppfærður.
+      <a href="{{ url_for('post', slug=post.slug) }}" class="alert-link">Skoða</a>.
+    </div>
+  {% endif %}
+
+  {% if uploaded_assets %}
+    <div class="alert alert-info small">
+      Nýjar myndir vistaðar:<br>
+      {% for url in uploaded_assets %}
+        <code>{{ url }}</code>{% if not loop.last %}<br>{% endif %}
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <form method="post" enctype="multipart/form-data" class="card card-hover">
+    <div class="card-body">
+      <div class="mb-3">
+        <label class="form-label" for="password">Lykilorð</label>
+        <input required type="password" class="form-control" id="password" name="password" autocomplete="off">
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label" for="title">Titill</label>
+        <input required type="text" class="form-control" id="title" name="title" value="{{ form_title }}">
+      </div>
+
+      <div class="row g-3 mb-3">
+        <div class="col-md-4">
+          <label class="form-label" for="date">Dagsetning</label>
+          <input type="date" class="form-control" id="date" name="date" value="{{ form_date }}">
+        </div>
+        <div class="col-md-8">
+          <label class="form-label" for="image">Post cover</label>
+          <input list="image-options" type="text" class="form-control" id="image" name="image" placeholder="/assets/img/posts/example.jpg" value="{{ form_image }}">
+          <datalist id="image-options">
+            {% for rel in existing_assets %}
+              <option value="{{ assets_prefix }}/{{ rel }}">{{ rel }}</option>
+            {% endfor %}
+          </datalist>
+          <div class="form-text">Myndir af listanum koma úr content/assets. Velur þú ekkert birtist bara texti.</div>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label" for="upload_images">Hlaða upp myndum fyrir pistilinn (multiple)</label>
+        <input class="form-control" type="file" id="upload_images" name="upload_images" multiple accept="image/*">
+        <div class="form-text">Myndir vistaðar í /assets/img/posts og hægt að vísa í þær úr innihaldinu hér að neðan.</div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label" for="content">Innihald (Markdown)</label>
+        <textarea required class="form-control" id="content" name="content" rows="12" style="font-family: var(--bs-font-monospace);">{{ form_content }}</textarea>
+        <div class="form-text">Dæmi myndaskrár: <code>![Alt text](/assets/img/posts/my-photo.jpg)</code></div>
+      </div>
+
+      <button type="submit" class="btn btn-primary">Vista breytingar</button>
+    </div>
+  </form>
+{% endblock %}

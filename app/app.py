@@ -3,6 +3,7 @@ import os
 from datetime import datetime
 from pathlib import Path
 from typing import List
+import frontmatter
 from flask import Flask, render_template, abort, request, send_from_directory
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
@@ -54,6 +55,31 @@ def create_app():
                 images.append(rel)
         images.sort()
         return images
+
+    def _save_post_uploads(upload_files):
+        uploaded_assets_local: list[str] = []
+        if not upload_files:
+            return uploaded_assets_local
+
+        dest_dir = Path(assets_dir) / "img" / "posts"
+        dest_dir.mkdir(parents=True, exist_ok=True)
+        for file in upload_files:
+            if not file or not file.filename:
+                continue
+            ext = Path(file.filename).suffix.lower()
+            if ext not in IMAGE_EXTS:
+                continue
+            safe_name = secure_filename(file.filename) or "upload"
+            target = dest_dir / safe_name
+            counter = 2
+            while target.exists():
+                target = dest_dir / f"{target.stem}-{counter}{target.suffix}"
+                counter += 1
+            file.save(target)
+            rel = target.relative_to(assets_dir).as_posix()
+            uploaded_assets_local.append(f"{store.assets_url_prefix}/{rel}")
+
+        return uploaded_assets_local
 
     @app.get("/health")
     def health():
@@ -119,24 +145,7 @@ def create_app():
                 error = "Rangt lykilorð."
             else:
                 # Handle image uploads first (if any)
-                if upload_files:
-                    dest_dir = Path(assets_dir) / "img" / "posts"
-                    dest_dir.mkdir(parents=True, exist_ok=True)
-                    for file in upload_files:
-                        if not file or not file.filename:
-                            continue
-                        ext = Path(file.filename).suffix.lower()
-                        if ext not in IMAGE_EXTS:
-                            continue
-                        safe_name = secure_filename(file.filename) or "upload"
-                        target = dest_dir / safe_name
-                        counter = 2
-                        while target.exists():
-                            target = dest_dir / f"{target.stem}-{counter}{target.suffix}"
-                            counter += 1
-                        file.save(target)
-                        rel = target.relative_to(assets_dir).as_posix()
-                        uploaded_assets.append(f"{store.assets_url_prefix}/{rel}")
+                uploaded_assets.extend(_save_post_uploads(upload_files))
 
                 if not title:
                     error = "Titill vantar."
@@ -197,6 +206,101 @@ def create_app():
             assets_prefix=store.assets_url_prefix,
             existing_assets=_list_asset_images(),
             default_date=datetime.utcnow().date().isoformat(),
+            disable_sidebar=True,
+        )
+
+    @app.route("/edit/<slug>/", methods=["GET", "POST"])
+    def edit_post(slug):
+        error = None
+        success = None
+        uploaded_assets: list[str] = []
+
+        post_obj = store.by_slug(slug)
+        if not post_obj:
+            abort(404)
+
+        try:
+            fm = frontmatter.load(post_obj.source_path)
+        except Exception:
+            with open(post_obj.source_path, "r", encoding="utf-8") as fh:
+                raw = fh.read()
+            fm = frontmatter.loads(raw)
+
+        image_key = "image" if "image" in fm.metadata else ("img" if "img" in fm.metadata else "image")
+
+        def _coerce_date_str(val) -> str:
+            if isinstance(val, datetime):
+                return val.date().isoformat()
+            try:
+                return val.isoformat()
+            except Exception:
+                try:
+                    return datetime.fromisoformat(str(val)).date().isoformat()
+                except Exception:
+                    return datetime.utcnow().date().isoformat()
+
+        base_title = fm.metadata.get("title") or post_obj.title
+        base_date = _coerce_date_str(fm.metadata.get("date") or post_obj.date)
+        base_image = fm.metadata.get(image_key) or ""
+        base_content = fm.content or ""
+
+        if request.method == "POST":
+            form_password = request.form.get("password", "")
+            title = (request.form.get("title") or "").strip()
+            date_str = (request.form.get("date") or "").strip()
+            image = (request.form.get("image") or "").strip()
+            body = (request.form.get("content") or "").strip()
+            upload_files = request.files.getlist("upload_images") if request.files else []
+
+            if not new_post_password:
+                error = "Set NEW_POST_PASSWORD in your environment to enable this form."
+            elif form_password != new_post_password:
+                error = "Rangt lykilorð."
+            else:
+                uploaded_assets.extend(_save_post_uploads(upload_files))
+
+                if not title:
+                    error = "Titill vantar."
+                elif not body:
+                    error = "Innihald vantar."
+                else:
+                    try:
+                        date_obj = datetime.fromisoformat(date_str).date() if date_str else datetime.utcnow().date()
+                    except ValueError:
+                        date_obj = datetime.utcnow().date()
+
+                    fm.metadata["title"] = title
+                    fm.metadata["slug"] = post_obj.slug
+                    fm.metadata["date"] = date_obj.isoformat()
+                    if image:
+                        fm.metadata[image_key] = image
+                    else:
+                        fm.metadata.pop(image_key, None)
+                    fm.content = body
+
+                    with open(post_obj.source_path, "w", encoding="utf-8") as fh:
+                        fh.write(frontmatter.dumps(fm).rstrip() + "\n")
+
+                    store._fingerprint = ""
+                    success = True
+                    base_title = title
+                    base_date = date_obj.isoformat()
+                    base_image = image
+                    base_content = body
+
+        return render_template(
+            "edit_post.html",
+            site_title=site_title,
+            post=post_obj,
+            error=error,
+            success=success,
+            uploaded_assets=uploaded_assets,
+            assets_prefix=store.assets_url_prefix,
+            existing_assets=_list_asset_images(),
+            form_title=request.form.get("title") or base_title,
+            form_date=request.form.get("date") or base_date,
+            form_image=request.form.get("image") or base_image,
+            form_content=request.form.get("content") or base_content,
             disable_sidebar=True,
         )
 

@@ -21,6 +21,7 @@ RUN pip install --no-cache-dir \
     flask==3.* \
     markdown==3.* \
     python-frontmatter==1.* \
+    python-dotenv==1.* \
     bleach==6.*
 
 # Copy the *pistlar/* contents (Docker build context is /pistlar)
