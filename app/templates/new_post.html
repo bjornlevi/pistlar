@@ -23,7 +23,16 @@
     </div>
   {% endif %}
 
-  <form method="post" class="card card-hover">
+  {% if uploaded_assets %}
+    <div class="alert alert-info small">
+      Nýjar myndir vistaðar:<br>
+      {% for url in uploaded_assets %}
+        <code>{{ url }}</code>{% if not loop.last %}<br>{% endif %}
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <form method="post" enctype="multipart/form-data" class="card card-hover">
     <div class="card-body">
       <div class="mb-3">
         <label class="form-label" for="password">Lykilorð (NEW_POST_PASSWORD)</label>
@@ -41,14 +50,27 @@
           <input type="date" class="form-control" id="date" name="date" value="{{ request.form.date or default_date }}">
         </div>
         <div class="col-md-8">
-          <label class="form-label" for="image">Mynd (valfrjálst)</label>
-          <input type="text" class="form-control" id="image" name="image" placeholder="/assets/img/posts/example.jpg" value="{{ request.form.image }}">
+          <label class="form-label" for="image">Post cover (veldu eða sláðu inn slóð)</label>
+          <input list="image-options" type="text" class="form-control" id="image" name="image" placeholder="/assets/img/posts/example.jpg" value="{{ request.form.image }}">
+          <datalist id="image-options">
+            {% for rel in existing_assets %}
+              <option value="{{ assets_prefix }}/{{ rel }}">{{ rel }}</option>
+            {% endfor %}
+          </datalist>
+          <div class="form-text">Myndir í listanum koma úr content/assets. Velur þú ekkert birtist bara texti.</div>
         </div>
       </div>
 
       <div class="mb-3">
+        <label class="form-label" for="upload_images">Hlaða upp myndum fyrir pistilinn (multiple)</label>
+        <input class="form-control" type="file" id="upload_images" name="upload_images" multiple accept="image/*">
+        <div class="form-text">Myndir vistaðar í /assets/img/posts og hægt að vísa í þær í innihaldinu hér að neðan.</div>
+      </div>
+
+      <div class="mb-3">
         <label class="form-label" for="content">Innihald (Markdown)</label>
-        <textarea required class="form-control" id="content" name="content" rows="12" placeholder="---\ntitle: ...\n---\n" style="font-family: var(--bs-font-monospace);">{{ request.form.content }}</textarea>
+        <textarea required class="form-control" id="content" name="content" rows="12" placeholder="Texti..." style="font-family: var(--bs-font-monospace);">{{ request.form.content }}</textarea>
+        <div class="form-text">Dæmi myndaskráar: <code>![Alt text](/assets/img/posts/my-photo.jpg)</code></div>
       </div>
 
       <button type="submit" class="btn btn-primary">Vista pistil</button>

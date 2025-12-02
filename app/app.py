@@ -3,10 +3,12 @@ import os
 from datetime import datetime
 from pathlib import Path
 from flask import Flask, render_template, abort, request, send_from_directory
+from werkzeug.utils import secure_filename
 from .content_loader import ContentStore, slugify
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]     # /app
 CONTENT_DIR   = PROJECT_ROOT / "content"                # /app/content
+IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg"}
 
 def create_app():
     # templates live at repo root: /pistlar/templates  -> /app/templates
@@ -32,6 +34,22 @@ def create_app():
     )
 
     store = ContentStore(posts_dir, assets_url_prefix="/assets")
+
+    def _list_asset_images() -> list[str]:
+        images = []
+        base = Path(assets_dir)
+        if not base.exists():
+            return images
+        for root, _, files in os.walk(base):
+            root_path = Path(root)
+            for fname in files:
+                ext = Path(fname).suffix.lower()
+                if ext not in IMAGE_EXTS:
+                    continue
+                rel = (root_path / fname).relative_to(base).as_posix()
+                images.append(rel)
+        images.sort()
+        return images
 
     @app.get("/health")
     def health():
@@ -81,6 +99,7 @@ def create_app():
         success = None
         created_file = None
         created_slug = None
+        uploaded_assets: list[str] = []
 
         if request.method == "POST":
             form_password = request.form.get("password", "")
@@ -88,20 +107,42 @@ def create_app():
             date_str = (request.form.get("date") or "").strip()
             image = (request.form.get("image") or "").strip()
             body = (request.form.get("content") or "").strip()
+            upload_files = request.files.getlist("upload_images") if request.files else []
 
             if not new_post_password:
                 error = "Set NEW_POST_PASSWORD in your environment to enable this form."
             elif form_password != new_post_password:
                 error = "Rangt lykilorð."
-            elif not title:
-                error = "Titill vantar."
-            elif not body:
-                error = "Innihald vantar."
             else:
-                try:
-                    date_obj = datetime.fromisoformat(date_str).date() if date_str else datetime.utcnow().date()
-                except ValueError:
-                    date_obj = datetime.utcnow().date()
+                # Handle image uploads first (if any)
+                if upload_files:
+                    dest_dir = Path(assets_dir) / "img" / "posts"
+                    dest_dir.mkdir(parents=True, exist_ok=True)
+                    for file in upload_files:
+                        if not file or not file.filename:
+                            continue
+                        ext = Path(file.filename).suffix.lower()
+                        if ext not in IMAGE_EXTS:
+                            continue
+                        safe_name = secure_filename(file.filename) or "upload"
+                        target = dest_dir / safe_name
+                        counter = 2
+                        while target.exists():
+                            target = dest_dir / f"{target.stem}-{counter}{target.suffix}"
+                            counter += 1
+                        file.save(target)
+                        rel = target.relative_to(assets_dir).as_posix()
+                        uploaded_assets.append(f"{store.assets_url_prefix}/{rel}")
+
+                if not title:
+                    error = "Titill vantar."
+                elif not body:
+                    error = "Innihald vantar."
+                else:
+                    try:
+                        date_obj = datetime.fromisoformat(date_str).date() if date_str else datetime.utcnow().date()
+                    except ValueError:
+                        date_obj = datetime.utcnow().date()
 
                 base_slug = slugify(title) or "post"
 
@@ -148,6 +189,9 @@ def create_app():
             success=success,
             created_file=created_file,
             created_slug=created_slug,
+            uploaded_assets=uploaded_assets,
+            assets_prefix=store.assets_url_prefix,
+            existing_assets=_list_asset_images(),
             default_date=datetime.utcnow().date().isoformat(),
         )
 
