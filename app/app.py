@@ -193,6 +193,7 @@ def create_app():
             assets_prefix=store.assets_url_prefix,
             existing_assets=_list_asset_images(),
             default_date=datetime.utcnow().date().isoformat(),
+            disable_sidebar=True,
         )
 
     return app
