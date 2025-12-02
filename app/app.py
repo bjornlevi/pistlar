@@ -210,8 +210,8 @@ def create_app():
             disable_sidebar=True,
         )
 
-    @app.route("/edit/<slug>/", methods=["GET", "POST"])
-    @app.route("/edit/<slug>", methods=["GET", "POST"])
+    @app.route("/pistlar/<slug>/edit/", methods=["GET", "POST"])
+    @app.route("/pistlar/<slug>/edit", methods=["GET", "POST"])
     def edit_post(slug):
         error = None
         success = None
