@@ -49,6 +49,18 @@ a:hover { color: var(--link-hover); text-decoration: none; }
 .hero h1 { font-weight: 700; letter-spacing: .2px; margin: 0; }
 .hero p  { color: var(--muted); margin: .25rem 0 0; }
 
+/* ---- Quick links ---- */
+.quick-links .link-tile {
+  background: var(--panel-2);
+  border-color: var(--border);
+}
+.quick-links .link-chevron {
+  color: var(--muted);
+  font-size: 1.25rem;
+  transition: color .12s ease;
+}
+.quick-links .link-tile:hover .link-chevron { color: var(--link-hover); }
+
 /* ---- Cards ---- */
 .card {
   background: var(--panel);
