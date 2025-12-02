@@ -177,20 +177,19 @@ def create_app():
                     target_path = posts_dir_path / f"{fname_base}-{i}.markdown"
                     i += 1
 
-                frontmatter_lines = [
-                    "---",
-                    f"title: {title}",
-                    f"date: {date_obj.isoformat()}",
-                    f"slug: {final_slug}",
-                ]
+                metadata = {
+                    "title": title,
+                    "date": date_obj.isoformat(),
+                    "slug": final_slug,
+                }
                 if image:
-                    frontmatter_lines.append(f"image: {image}")
-                frontmatter_lines.append("---")
+                    metadata["image"] = image
+
+                fm_post = frontmatter.Post(body.rstrip() + "\n", **metadata)
+                rendered = frontmatter.dumps(fm_post).rstrip() + "\n"
 
                 with open(target_path, "w", encoding="utf-8") as fh:
-                    # ensure a blank line between frontmatter and body
-                    fh.write("\n".join(frontmatter_lines) + "\n\n")
-                    fh.write(body.rstrip() + "\n")
+                    fh.write(rendered)
 
                 success = True
                 created_file = str(target_path)
@@ -224,9 +223,29 @@ def create_app():
         try:
             fm = frontmatter.load(post_obj.source_path)
         except Exception:
+            # Fall back if frontmatter is malformed: strip any leading fm block and seed metadata from the post object
             with open(post_obj.source_path, "r", encoding="utf-8") as fh:
                 raw = fh.read()
-            fm = frontmatter.loads(raw)
+
+            raw_lines = raw.splitlines()
+            body_lines = raw_lines
+            if raw_lines and raw_lines[0].strip() == "---":
+                try:
+                    end_idx = raw_lines[1:].index("---") + 1
+                    body_lines = raw_lines[end_idx + 1 :]
+                except ValueError:
+                    body_lines = raw_lines[1:]
+            fallback_body = "\n".join(body_lines).strip("\n") + "\n"
+
+            fallback_meta = {
+                "title": post_obj.title,
+                "slug": post_obj.slug,
+                "date": getattr(post_obj.date, "date", lambda: post_obj.date)().isoformat() if post_obj.date else datetime.utcnow().date().isoformat(),
+            }
+            if post_obj.image:
+                fallback_meta["image"] = post_obj.image
+
+            fm = frontmatter.Post(fallback_body, **fallback_meta)
 
         image_key = "image" if "image" in fm.metadata else ("img" if "img" in fm.metadata else "image")
 
